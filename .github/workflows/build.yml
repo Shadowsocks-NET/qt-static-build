@@ -8,31 +8,29 @@ on:
 jobs:
   publish:
     name: Publish
-    strategy:
-      fail-fast: false
     runs-on: ubuntu-latest
     container:
       image: archlinux/archlinux:base-devel
 
     steps:
-      - uses: actions/checkout@v2
-      - name: Get version
-        id: get_version
-        run: echo "::set-output name=VERSION::$(echo $GITHUB_REF | cut -d / -f 3)"
+      - uses: actions/checkout@v3
+
       - name: Run build script
-        run: bash ./build-static.sh ${{ steps.get_version.outputs.VERSION }}
+        run: bash ./build-static.sh ${{ github.ref_name }}
+
       - name: Package
         env:
           ZSTD_CLEVEL: 19
           ZSTD_NBTHREADS: 2
         run: |
           cd installed-static
-          tar -acf ../qt-somewhere-static-${{ steps.get_version.outputs.VERSION }}-archlinux-x86_64.tar.zst .
+          tar -acf ../qt-somewhere-static-${{ github.ref_name }}-archlinux-x86_64.tar.zst .
+
       - name: Upload release assets
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: qt-somewhere-static-${{ steps.get_version.outputs.VERSION }}-archlinux-x86_64.tar.zst
+          file: qt-somewhere-static-${{ github.ref_name }}-archlinux-x86_64.tar.zst
           tag: ${{ github.ref }}
           file_glob: false
           overwrite: true
